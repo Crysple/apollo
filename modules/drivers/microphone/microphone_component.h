@@ -47,9 +47,11 @@ class MicrophoneComponent : public Component<> {
 
  private:
   void run();
+  void fill_channel_data(int chunk_i);
 
   // Configuration
-  int n_chunks_, n_channels_, chunk_, chunk_size_, buffer_size_, total_frames_;
+  int n_chunks_, n_channels_, chunk_, chunk_size_, n_chunk_,
+      sample_width_;
 
   // class data
   std::shared_ptr<AudioData> audio_data_ptr_;

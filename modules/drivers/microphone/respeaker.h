@@ -44,7 +44,6 @@ class Stream {
   void init_stream(int rate, int channels, int chunk, int input_device_index,
                    PaSampleFormat format);
   void read_stream(int n_frames, char *buffer) const;
-  int get_chunk_size(int n_frames) const;
 };
 
 class Respeaker {
@@ -63,7 +62,6 @@ class Respeaker {
   ~Respeaker();
   void init(const std::shared_ptr<const MicrophoneConfig> &microphone_config);
   void read_stream(int n_frames, char *buffer) const;
-  int get_chunk_size(int n_frames) const;
 };
 
 }  // namespace microphone

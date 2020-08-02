@@ -20,6 +20,8 @@ namespace apollo {
 namespace drivers {
 namespace microphone {
 
+PaError err;
+
 // Helper functions
 void report_error(PaError err, const std::string &func_name) {
   AERROR << "an error occured while calling " << func_name;
@@ -28,15 +30,15 @@ void report_error(PaError err, const std::string &func_name) {
 }
 
 // Stream
-Stream::~Stream() { Pa_CloseStream(pastream_ptr_); }
+Stream::~Stream() {
+  Pa_CloseStream(pastream_ptr_);
+  free(inputParameters_ptr_);
+}
 
 void Stream::init_stream(int rate, int channels, int chunk,
                          int input_device_index, PaSampleFormat format) {
-  PaError err;
-
   // Init parameters of input device
-  inputParameters_ptr_ = reinterpret_cast<PaStreamParameters *>(
-      malloc(sizeof(PaStreamParameters)));
+  inputParameters_ptr_ = new PaStreamParameters;
   inputParameters_ptr_->device = input_device_index;
   inputParameters_ptr_->channelCount = channels;
   inputParameters_ptr_->sampleFormat = format;
@@ -58,17 +60,12 @@ void Stream::init_stream(int rate, int channels, int chunk,
 }
 
 void Stream::read_stream(int n_frames, char *buffer) const {
-  int err =
+  err =
       Pa_ReadStream(pastream_ptr_, reinterpret_cast<void *>(buffer), n_frames);
   if (err != paNoError) {
     report_error(err, "Pa_ReadStream");
     throw std::runtime_error("");
   }
-}
-
-int Stream::get_chunk_size(int n_frames) const {
-  return (n_frames) * (inputParameters_ptr_->channelCount) *
-         (Pa_GetSampleSize(inputParameters_ptr_->sampleFormat));
 }
 
 // Respeaker
@@ -78,7 +75,7 @@ void Respeaker::init(
   if (microphone_config->microphone_model() != MicrophoneConfig::RESPEAKER) {
     AERROR << "Microphone driver only supports respeaker model in config file";
   }
-  int err = Pa_Initialize();
+  err = Pa_Initialize();
   if (err != paNoError) {
     Pa_Terminate();
     report_error(err, "Pa_Initialize");
@@ -161,10 +158,6 @@ const PaHostApiInfo *Respeaker::get_host_api_info(
 
 void Respeaker::read_stream(int n_frames, char *buffer) const {
   stream_ptr_->read_stream(n_frames, buffer);
-}
-
-int Respeaker::get_chunk_size(int n_frames) const {
-  return stream_ptr_->get_chunk_size(n_frames);
 }
 
 }  // namespace microphone
