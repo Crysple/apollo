@@ -16,7 +16,7 @@
 
 #include "modules/audio/inference/direction_detection.h"
 #include "yaml-cpp/yaml.h"
-
+#include <string>
 namespace apollo {
 namespace audio {
 
@@ -52,6 +52,13 @@ Point3D DirectionDetection::EstimateSoundSource(
 double DirectionDetection::EstimateDirection(
     std::vector<std::vector<double>>&& channels_vec, const int sample_rate,
     const double mic_distance) {
+  for (const auto& c: channels_vec){
+      std::string ifo = "";
+      for (int i = 0; i < 5; ++i)
+        ifo += std::to_string(c[i]) + " ";
+      //AINFO << ifo;
+  }
+  //AINFO << "";
   std::vector<torch::Tensor> channels_ts;
   auto options = torch::TensorOptions().dtype(torch::kFloat64);
   int size = static_cast<int>(channels_vec[0].size());
@@ -60,7 +67,7 @@ double DirectionDetection::EstimateDirection(
   }
 
   double tau0, tau1;
-  int theta0, theta1;
+  double theta0, theta1;
   const double max_tau = mic_distance / kSoundSpeed;
   tau0 = GccPhat(channels_ts[0], channels_ts[2], sample_rate, max_tau, 1);
   theta0 = asin(tau0 / max_tau) * 180 / M_PI;
@@ -69,12 +76,13 @@ double DirectionDetection::EstimateDirection(
 
   int best_guess = 0;
   if (fabs(theta0) < fabs(theta1)) {
-    best_guess = theta1 > 0 ? (theta0 + 360) % 360 : (180 - theta0);
+    best_guess = theta1 > 0 ? fmod(theta0 + 360, 360) : (180 - theta0);
   } else {
-    best_guess = theta0 < 0 ? (theta1 + 360) % 360 : (180 - theta1);
+    best_guess = theta0 < 0 ? fmod(theta1 + 360, 360) : (180 - theta1);
     best_guess = (best_guess + 90 + 180) % 360;
   }
-  best_guess = (-best_guess + 120) % 360;
+  best_guess = (-best_guess + 480) % 360;
+  AINFO << "Direction guess: " << best_guess;
 
   return static_cast<double>(best_guess) / 90 * M_PI;
 }

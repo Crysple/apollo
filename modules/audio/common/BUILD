@@ -15,6 +15,7 @@ cc_library(
     hdrs = ["audio_info.h"],
     deps = [
         ":audio_gflags",
+        "//cyber",
         "//modules/audio/proto:audio_cc_proto",
         "//modules/drivers/microphone/proto:audio_cc_proto",
         "//modules/drivers/microphone/proto:microphone_config_cc_proto",

@@ -51,17 +51,21 @@ bool AudioComponent::Proc(const std::shared_ptr<AudioData>& audio_data) {
   // TODO(all) remove GetSignals() multiple calls
   audio_info_.Insert(audio_data);
   AudioDetection audio_detection;
-  *audio_detection.mutable_position() =
-      direction_detection_.EstimateSoundSource(
-          audio_info_.GetSignals(audio_data->microphone_config().chunk()),
-          respeaker_extrinsics_file_,
-          audio_data->microphone_config().sample_rate(),
-          audio_data->microphone_config().mic_distance());
+  size_t i = 0, chunk = audio_data->microphone_config().chunk();
+  const auto signals = audio_info_.GetSignals(audio_data->microphone_config().sample_rate()*6+11111);
+  while ((i+1) * chunk <= signals[0].size()){
+      std::vector<std::vector<double>> signal_chunks;
+      for (const auto& sig: signals){
+          signal_chunks.emplace_back(sig.begin()+i*chunk, sig.begin()+(i+1)*chunk);
+      }
+      *audio_detection.mutable_position() =
+          direction_detection_.EstimateSoundSource(
+            move(signal_chunks),
+            respeaker_extrinsics_file_,
+            audio_data->microphone_config().sample_rate(), 0.065);
+      i += 1;
+  }
 
-  auto signals =
-      audio_info_.GetSignals(audio_data->microphone_config().chunk());
-  MovingResult moving_result = moving_detection_.Detect(signals);
-  audio_detection.set_moving_result(moving_result);
   // TODO(all) add header to audio_detection
   audio_writer_->Write(audio_detection);
   return true;

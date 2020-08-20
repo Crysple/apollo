@@ -21,6 +21,7 @@
 
 #include "modules/drivers/microphone/proto/audio.pb.h"
 #include "modules/drivers/microphone/proto/microphone_config.pb.h"
+#include "cyber/cyber.h"
 
 namespace apollo {
 namespace audio {

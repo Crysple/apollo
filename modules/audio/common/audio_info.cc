@@ -17,6 +17,8 @@
 #include "modules/audio/common/audio_info.h"
 
 #include <algorithm>
+#include <iostream>
+#include <sstream>
 
 #include "modules/audio/common/audio_gflags.h"
 
@@ -46,15 +48,28 @@ void AudioInfo::InsertChannelData(const std::size_t index,
   }
   int width = microphone_config.sample_width();
   const std::string& data = channel_data.data();
+  //std::stringstream ss;
+  //for (int i = 0; i < 16; i+=2){
+  //    short signal = ((short(data[i+1])) << 8) | (0x00ff & data[i]);
+  //    ss << "  " << signal;
+  //}
+  //std::string mystr = ss.str();
+  //AINFO << "-------" << mystr;
+  //std::string ss;
   for (std::size_t i = 0; i < data.length(); i += width) {
-    int16_t signal = ((int16_t(data[i])) << 8) | (0x00ff & data[i + 1]);
+    int16_t signal = ((int16_t(data[i+1])) << 8) | (0x00ff & data[i]);
+    //if (i < 5) ss += std::to_string(signal) + " ";
     signals_[index].push_back(static_cast<double>(signal));
   }
-  std::size_t max_signal_length = static_cast<std::size_t>(
-      FLAGS_cache_signal_time * microphone_config.sample_rate());
+  //AINFO<<"\n";
+  //AINFO << ss;
+  std::size_t max_signal_length = 9000;
   while (signals_[index].size() > max_signal_length) {
     signals_[index].pop_front();
   }
+  //ss = "";
+  //for (int i = 0; i < 5; ++i) ss += std::to_string(signals_[index][i]) + " ";
+  //AINFO << ss;
 }
 
 std::vector<std::vector<double>> AudioInfo::GetSignals(
